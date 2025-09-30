@@ -36,4 +36,4 @@ fi
 
 echo "[+] pentool installation complete!"
 echo "Activate with: source .venv/bin/activate"
-echo "Run with: python3 pentool.py --help"
+echo "Run with: python3 AuditHawk.py --help"

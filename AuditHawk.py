@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-pentool.py - Async Recon + Pluginable Audit + Screenshots + HTML report
+AuditHawk.py - Async Recon + Pluginable Audit + Screenshots + HTML report
 
 Usage examples:
-  python3 pentool.py --target example.com --output out.json --csv out.csv --screenshot --plugins plugins --concurrency 40
-  python3 pentool.py --targets hosts.txt --use-subfinder --output multi.json --html report.html
+  python3 AuditHawk.py --target example.com --output out.json --csv out.csv --screenshot --plugins plugins --concurrency 40
+  python3 AuditHawk.py --targets hosts.txt --use-subfinder --output multi.json --html report.html
 
 Notes:
  - This tool performs non-invasive checks (HEAD/GET, header analysis, path checks).
