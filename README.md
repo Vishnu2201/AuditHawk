@@ -1,7 +1,7 @@
 # AuditHawk 🔍
 Async Recon + Pluginable Pentesting Helper
 
-Pentool is a **safe, non-destructive recon tool** for penetration testers.
+AuditHawk is a **safe, non-destructive recon tool** for penetration testers.
 It discovers subdomains, probes HTTP(S), checks headers, finds common paths, runs plugins, and can generate screenshots & HTML reports.
 
 ---
@@ -22,7 +22,7 @@ It discovers subdomains, probes HTTP(S), checks headers, finds common paths, run
 Clone the repo:
 ```bash
 git clone https://github.com/Vishnu2201/AuditHawk.git
-cd pentool
+cd AuditHawk
 ```
 
 Run installer:
@@ -46,17 +46,17 @@ source .venv/bin/activate
 
 Single target:
 ```bash
-python3 pentool.py --target example.com --output results.json --csv summary.csv --plugins plugins
+python3 AuditHawk.py --target example.com --output results.json --csv summary.csv --plugins plugins
 ```
 
 Multiple targets:
 ```bash
-python3 pentool.py --targets examples/hosts.txt --use-subfinder --screenshot --plugins plugins --output results.json --csv summary.csv --html report.html
+python3 AuditHawk.py --targets examples/hosts.txt --use-subfinder --screenshot --plugins plugins --output results.json --csv summary.csv --html report.html
 ```
 
 Help:
 ```bash
-python3 pentool.py --help
+python3 AuditHawk.py --help
 ```
 
 ---
@@ -85,7 +85,7 @@ async def run(session, base, results):
 
 ## Example
 ```bash
-python3 pentool.py --target example.com --screenshot --html report.html
+python3 AuditHawk.py --target example.com --screenshot --html report.html
 ```
 
 Produces:
