@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# install.sh - installer for pentool
+# install.sh - installer for AuditHawk
 # Usage: ./install.sh
 
 set -e
 
-echo "[*] Setting up pentool environment..."
+echo "[*] Setting up AuditHawk environment..."
 
 # Check python3
 if ! command -v python3 >/dev/null; then
@@ -34,6 +34,6 @@ if [ "$1" == "--with-playwright" ]; then
   python -m playwright install
 fi
 
-echo "[+] pentool installation complete!"
+echo "[+] AuditHawk installation complete!"
 echo "Activate with: source .venv/bin/activate"
 echo "Run with: python3 AuditHawk.py --help"

@@ -275,7 +275,7 @@ def render_html_report(results: List[Dict[str,Any]], html_path: str, screenshots
 <html>
 <head>
 <meta charset="utf-8"/>
-<title>Pentool Report</title>
+<title>AuditHawk Report</title>
 <style>
 body{{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:20px}}
 .card{{border-radius:8px; border:1px solid #ddd; padding:12px; margin-bottom:12px}}
@@ -285,7 +285,7 @@ pre{{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}}
 </style>
 </head>
 <body>
-<h1>Pentool Report</h1>
+<h1>AuditHawk Report</h1>
 <p>Generated: {time.ctime()}</p>
 <div id="report"></div>
 <script>
@@ -330,7 +330,7 @@ def load_targets_from_file(path: str) -> List[str]:
     return lines
 
 def main():
-    parser = argparse.ArgumentParser(description="pentool: async recon + plugin framework + screenshots + report")
+    parser = argparse.ArgumentParser(description="AuditHawk: async recon + plugin framework + screenshots + report")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--targets", help="file with newline-separated targets (host or domain)")
     group.add_argument("--target", help="single target (example.com)")
@@ -339,7 +339,7 @@ def main():
     parser.add_argument("--screenshot", action="store_true", help="take screenshots (requires playwright)")
     parser.add_argument("--screenshot-dir", default="screenshots", help="dir to save screenshots")
     parser.add_argument("--use-subfinder", action="store_true", help="run subfinder/amass if installed to expand targets")
-    parser.add_argument("--output", help="JSON output path", default="pentool_results.json")
+    parser.add_argument("--output", help="JSON output path", default="AuditHawk_results.json")
     parser.add_argument("--csv", help="CSV summary output path", default=None)
     parser.add_argument("--html", help="HTML report path", default=None)
     args = parser.parse_args()
