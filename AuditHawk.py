@@ -200,8 +200,24 @@ async def run_audit(targets:List[str], concurrency:int, plugins_path:str|None, s
         with open(output_json,"w",encoding="utf-8") as f: json.dump(results,f,indent=2)
         print(f"[+] Wrote JSON: {output_json}")
     return results
-
 # --- Reporting ---
+def results_to_csv(results: List[Dict[str, Any]], csv_path: str):
+    rows = []
+    for r in results:
+        host = r.get("host")
+        status = r.get("http_probe", {}).get("status")
+        title = r.get("http_probe", {}).get("title")
+        server = r.get("http_probe", {}).get("server")
+        sec_missing = ",".join(r.get("sec_headers", {}).get("missing", []))
+        notes = " | ".join(r.get("notes", []))
+        rows.append([host, status, title, server, sec_missing, notes])
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["host", "status", "title", "server", "missing_security_headers", "notes"])
+        w.writerows(rows)
+    print(f"[+] Wrote CSV: {csv_path}")
+
+##Reporting
 def render_html_report(results, html_path, screenshots_dir: str | None):
     """
     Generate a self-contained HTML report.
@@ -238,8 +254,8 @@ results.forEach(r => {{
   const div = document.createElement('div');
   div.className = 'card';
   div.innerHTML = `
-    <h2>${{r.host}} <small>(${ { " " } }safe(r.http_probe && r.http_probe.status))</small></h2>
-    <p><b>Title:</b> ${{safe(r.http_probe && r.http_probe.title)}} 
+    <h2>${{r.host}} <small>(${safe(r.http_probe && r.http_probe.status)})</small></h2>
+    <p><b>Title:</b> ${{safe(r.http_probe && r.http_probe.title)}}
        <b>Server:</b> ${{safe(r.http_probe && r.http_probe.server)}}</p>
     <p><b>Missing headers:</b> ${{safe((r.sec_headers && r.sec_headers.missing || []).join(', '))}}</p>
     <p><b>Notes:</b> ${{safe((r.notes || []).join(' | '))}}</p>
@@ -273,8 +289,6 @@ results.forEach(r => {{
         f.write(html_template)
     print(f"[+] Wrote HTML report: {html_path}")
 
-
-
 # --- CLI ---
 def load_targets_from_file(path): 
     return [l.strip() for l in open(path) if l.strip() and not l.startswith("#")]
@@ -295,12 +309,6 @@ def results_to_csv(results: List[Dict[str, Any]], csv_path: str):
         w.writerow(["host", "status", "title", "server", "missing_security_headers", "notes"])
         w.writerows(rows)
     print(f"[+] Wrote CSV: {csv_path}")
-
-
-def render_html_report(results, html_path, screenshots_dir: str | None):
-    ...
-    # (your f-string HTML template, unchanged except no stray `d`)
-
 
 def main():
     p=argparse.ArgumentParser(description="AuditHawk async recon tool")
