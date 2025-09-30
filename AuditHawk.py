@@ -202,15 +202,6 @@ async def run_audit(targets:List[str], concurrency:int, plugins_path:str|None, s
     return results
 
 # --- Reporting ---
-def results_to_csv(results,csv_path):
-    rows=[[r.get("host"),r.get("http_probe",{}).get("status"),
-            r.get("http_probe",{}).get("title"),r.get("http_probe",{}).get("server"),
-            ",".join(r.get("sec_headers",{}).get("missing",[])),
-            " | ".join(r.get("notes",[]))] for r in results]
-    with open(csv_path,"w",newline="",encoding="utf-8") as f:
-        w=csv.writer(f); w.writerow(["host","status","title","server","missing_security_headers","notes"]); w.writerows(rows)
-    print(f"[+] Wrote CSV: {csv_path}")
-
 def render_html_report(results, html_path, screenshots_dir: str | None):
     """
     Generate a self-contained HTML report.
@@ -224,12 +215,12 @@ def render_html_report(results, html_path, screenshots_dir: str | None):
 <meta charset="utf-8"/>
 <title>AuditHawk Report</title>
 <style>
-body { font-family: system-ui, sans-serif; margin: 20px; }
-.card { border: 1px solid #ddd; padding: 12px; margin: 12px 0; border-radius: 8px; }
-.card h2 { margin: 0 0 8px; }
-pre { background: #f7f7f7; padding: 8px; border-radius: 6px; overflow: auto; }
-img.thumb { max-width: 320px; margin: 6px 4px; border: 1px solid #ccc; border-radius: 6px; }
-.screenshot-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+body {{ font-family: system-ui, sans-serif; margin: 20px; }}
+.card {{ border: 1px solid #ddd; padding: 12px; margin: 12px 0; border-radius: 8px; }}
+.card h2 {{ margin: 0 0 8px; }}
+pre {{ background: #f7f7f7; padding: 8px; border-radius: 6px; overflow: auto; }}
+img.thumb {{ max-width: 320px; margin: 6px 4px; border: 1px solid #ccc; border-radius: 6px; }}
+.screenshot-row {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }}
 </style>
 </head>
 <body>
@@ -240,35 +231,35 @@ img.thumb { max-width: 320px; margin: 6px 4px; border: 1px solid #ccc; border-ra
 const results = {results};
 const screenshotsDir = {screenshots};
 
-function safe(s) { return (s===null || s===undefined) ? "" : s; }
+function safe(s) {{ return (s===null || s===undefined) ? "" : s; }}
 
 const container = document.getElementById('report');
-results.forEach(r => {
+results.forEach(r => {{
   const div = document.createElement('div');
   div.className = 'card';
   div.innerHTML = `
-    <h2>${r.host} <small>(${safe(r.http_probe?.status)})</small></h2>
-    <p><b>Title:</b> ${safe(r.http_probe?.title)} <b>Server:</b> ${safe(r.http_probe?.server)}</p>
-    <p><b>Missing headers:</b> ${safe((r.sec_headers?.missing || []).join(', '))}</p>
-    <p><b>Notes:</b> ${safe((r.notes || []).join(' | '))}</p>
-    <details><summary>Paths (${(r.paths || []).length})</summary><pre>${JSON.stringify(r.paths, null, 2)}</pre></details>
-    <details><summary>Plugins</summary><pre>${JSON.stringify(r.plugins, null, 2)}</pre></details>
+    <h2>${{r.host}} <small>(${ {{} }safe(r.http_probe?.status)})</small></h2>
+    <p><b>Title:</b> ${{safe(r.http_probe?.title)}} <b>Server:</b> ${{safe(r.http_probe?.server)}}</p>
+    <p><b>Missing headers:</b> ${{safe((r.sec_headers?.missing || []).join(', '))}}</p>
+    <p><b>Notes:</b> ${{safe((r.notes || []).join(' | '))}}</p>
+    <details><summary>Paths (${{(r.paths || []).length}})</summary><pre>${{JSON.stringify(r.paths, null, 2)}}</pre></details>
+    <details><summary>Plugins</summary><pre>${{JSON.stringify(r.plugins, null, 2)}}</pre></details>
   `;
 
-  if (screenshotsDir) {
+  if (screenshotsDir) {{
     const row = document.createElement('div');
     row.className = 'screenshot-row';
-    ["https","http"].forEach(sch => {
+    ["https","http"].forEach(sch => {{
       const img = document.createElement('img');
       img.src = screenshotsDir + "/" + r.host + "_" + sch + ".png";
       img.className = 'thumb';
       img.alt = r.host + "_" + sch;
       row.appendChild(img);
-    });
+    }});
     div.appendChild(row);
-  }
+  }}
   container.appendChild(div);
-});
+}});
 </script>
 </body>
 </html>
@@ -281,6 +272,7 @@ results.forEach(r => {
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_template)
     print(f"[+] Wrote HTML report: {html_path}")
+
 
 
 # --- CLI ---
