@@ -12,7 +12,6 @@ Notes:
  - To enable screenshots, install playwright and run `playwright install`.
 """
 
-
 import argparse
 import asyncio
 import importlib.util
@@ -47,14 +46,15 @@ def normalize_target(t: str) -> str:
         return ""
     if t.startswith("http://") or t.startswith("https://"):
         return t
-    # prefer https first
-    return "https://" + t
+    return "https://" + t  # prefer https
+
 
 def get_host_from_url(url: str) -> str:
     try:
         return urlparse(url).netloc
     except:
         return url
+
 
 def analyze_security_headers(headers: Dict[str, str]) -> Dict[str, Any]:
     missing = []
@@ -77,31 +77,31 @@ async def fetch(session: aiohttp.ClientSession, url: str, timeout=DEFAULT_TIMEOU
             result["server"] = resp.headers.get("Server") or resp.headers.get("server")
             text = await resp.text(errors="replace")
             result["len"] = len(text)
-            m = re.search(r\"<title>(.*?)</title>\", text, re.IGNORECASE | re.DOTALL)
+            m = re.search(r"<title>(.*?)</title>", text, re.IGNORECASE | re.DOTALL)
             if m:
-                result["title"] = re.sub(r\"\\s+\", \" \", m.group(1)).strip()
+                result["title"] = re.sub(r"\s+", " ", m.group(1)).strip()
     except Exception as e:
-        result[\"error\"] = str(e)
+        result["error"] = str(e)
     return result
 
 
 async def fetch_head_or_get(session: aiohttp.ClientSession, url: str) -> Dict[str, Any]:
-    out = {\"url\": url, \"status\": None, \"headers\": {}, \"len\": 0, \"error\": None}
+    out = {"url": url, "status": None, "headers": {}, "len": 0, "error": None}
     try:
         async with session.head(url, timeout=5, allow_redirects=True) as r:
-            out[\"status\"] = r.status
-            out[\"headers\"] = {k.lower(): v for k, v in r.headers.items()}
+            out["status"] = r.status
+            out["headers"] = {k.lower(): v for k, v in r.headers.items()}
             return out
     except Exception:
         try:
             async with session.get(url, timeout=7, allow_redirects=True) as r2:
-                out[\"status\"] = r2.status
-                out[\"headers\"] = {k.lower(): v for k, v in r2.headers.items()}
-                text = await r2.text(errors=\"replace\")
-                out[\"len\"] = len(text)
+                out["status"] = r2.status
+                out["headers"] = {k.lower(): v for k, v in r2.headers.items()}
+                text = await r2.text(errors="replace")
+                out["len"] = len(text)
                 return out
         except Exception as e:
-            out[\"error\"] = str(e)
+            out["error"] = str(e)
             return out
 
 
@@ -111,28 +111,28 @@ def load_plugins(path: str) -> List[Any]:
     if not path or not os.path.isdir(path):
         return plugins
     sys.path.insert(0, path)
-    for py in sorted(glob.glob(os.path.join(path, \"*.py\"))):
+    for py in sorted(glob.glob(os.path.join(path, "*.py"))):
         name = os.path.splitext(os.path.basename(py))[0]
         try:
             spec = importlib.util.spec_from_file_location(name, py)
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)  # type: ignore
-            if hasattr(mod, \"run\") and asyncio.iscoroutinefunction(mod.run):
+            if hasattr(mod, "run") and asyncio.iscoroutinefunction(mod.run):
                 plugins.append((name, mod))
-                print(f\"[+] Loaded plugin: {name}\")
+                print(f"[+] Loaded plugin: {name}")
             else:
-                print(f\"[-] Skipping {name}: missing async run(session, base, results)\")
+                print(f"[-] Skipping {name}: missing async run(session, base, results)")
         except Exception as e:
-            print(f\"[-] Error loading plugin {name}: {e}\")
+            print(f"[-] Error loading plugin {name}: {e}")
     return plugins
 
 
-# --- Subdomain discovery helpers (calls external tools if available) ---
+# --- Subdomain discovery helpers ---
 def run_subfinder(target: str) -> List[str]:
     try:
-        p = subprocess.run([\"subfinder\", \"-d\", target, \"-silent\"], capture_output=True, text=True, timeout=120)
+        p = subprocess.run(["subfinder", "-d", target, "-silent"], capture_output=True, text=True, timeout=120)
         out = [l.strip() for l in p.stdout.splitlines() if l.strip()]
-        print(f\"[subfinder] found {len(out)} domains\")
+        print(f"[subfinder] found {len(out)} domains")
         return out
     except Exception:
         return []
@@ -140,102 +140,85 @@ def run_subfinder(target: str) -> List[str]:
 
 def run_amass(target: str) -> List[str]:
     try:
-        p = subprocess.run([\"amass\", \"enum\", \"-norecursive\", \"-d\", target, \"-o\", \"/dev/stdout\"], capture_output=True, text=True, timeout=240)
+        p = subprocess.run(["amass", "enum", "-norecursive", "-d", target, "-o", "/dev/stdout"], capture_output=True, text=True, timeout=240)
         out = [l.strip() for l in p.stdout.splitlines() if l.strip()]
-        print(f\"[amass] found {len(out)} domains\")
+        print(f"[amass] found {len(out)} domains")
         return out
     except Exception:
         return []
 
 
-# --- Screenshots: resilient single-page capture ---
+# --- Screenshot ---
 async def take_screenshot(browser, url: str, path: str):
-    \"\"\"
-    Takes a screenshot for `url` to `path`.
-    Primary attempt waits for DOMContentLoaded with 30s timeout.
-    Fallback attempt waits for commit (response started) with 10s timeout.
-    \"\"\"
     try:
         page = await browser.new_page()
         try:
-            await page.set_viewport_size({\"width\": 1280, \"height\": 900})
-            # Primary attempt: wait for DOM content loaded
-            await page.goto(url, timeout=30000, wait_until=\"domcontentloaded\")
+            await page.set_viewport_size({"width": 1280, "height": 900})
+            await page.goto(url, timeout=30000, wait_until="domcontentloaded")
             await page.screenshot(path=path, full_page=True)
-            print(f\"[+] Screenshot captured for {url} -> {path}\")
-            return True
+            print(f"[+] Screenshot captured for {url} -> {path}")
         except Exception as e:
-            print(f\"[!] Primary screenshot attempt failed for {url}: {e}\")
-            # Fallback: try faster, stop once response has started
+            print(f"[!] Primary screenshot failed for {url}: {e}")
             try:
-                await page.goto(url, timeout=10000, wait_until=\"commit\")
+                await page.goto(url, timeout=10000, wait_until="commit")
                 await page.screenshot(path=path, full_page=True)
-                print(f\"[+] Fallback screenshot captured for {url} -> {path}\")
-                return True
+                print(f"[+] Fallback screenshot for {url} -> {path}")
             except Exception as e2:
-                print(f\"[-] Screenshot failed completely for {url}: {e2}\")
-                return False
+                print(f"[-] Screenshot failed for {url}: {e2}")
         finally:
-            try:
-                await page.close()
-            except Exception:
-                pass
+            await page.close()
     except Exception as outer:
-        print(f\"[-] Could not create page for {url}: {outer}\")
-        return False
+        print(f"[-] Could not create page for {url}: {outer}")
 
 
-# --- High level audit for a single target ---
+# --- High level audit ---
 async def audit_target(session: aiohttp.ClientSession, base: str, paths: List[str]) -> Dict[str, Any]:
     base = normalize_target(base)
-    summary = {\"target\": base, \"host\": get_host_from_url(base), \"http_probe\": None, \"paths\": [], \"sec_headers\": {}, \"notes\": [], \"plugins\": {}}
+    summary = {"target": base, "host": get_host_from_url(base), "http_probe": None, "paths": [], "sec_headers": {}, "notes": [], "plugins": {}}
     probe = await fetch(session, base)
-    summary[\"http_probe\"] = probe
-    headers = probe.get(\"headers\", {}) or {}
-    summary[\"sec_headers\"] = analyze_security_headers(headers)
-    # common paths
+    summary["http_probe"] = probe
+    headers = probe.get("headers", {}) or {}
+    summary["sec_headers"] = analyze_security_headers(headers)
+
     tasks = []
     bases = [base]
-    if base.startswith(\"https://\"):
-        bases.append(\"http://\" + get_host_from_url(base))
-    elif base.startswith(\"http://\"):
-        bases.append(\"https://\" + get_host_from_url(base))
+    if base.startswith("https://"):
+        bases.append("http://" + get_host_from_url(base))
+    elif base.startswith("http://"):
+        bases.append("https://" + get_host_from_url(base))
     for b in bases:
         for p in paths:
-            tasks.append(fetch_head_or_get(session, b.rstrip(\"/\") + p))
+            tasks.append(fetch_head_or_get(session, b.rstrip("/") + p))
     if tasks:
         results = await asyncio.gather(*tasks)
         for r in results:
-            if r.get(\"status\") and 200 <= r[\"status\"] < 400:
-                summary[\"paths\"].append(r)
-            elif r.get(\"status\") in (401, 403, 500):
-                summary[\"paths\"].append(r)
-    # notes: server banner
-    if probe.get(\"status\") and probe[\"status\"] < 400:
-        if \"x-powered-by\" in headers or \"server\" in headers:
-            summary[\"notes\"].append(f\"server banner: {headers.get('server') or headers.get('x-powered-by')}\")
-    # detect admin pages and sensitive files
-    for p in summary[\"paths\"]:
-        if any(x in p[\"url\"].lower() for x in [\"/admin\", \"/wp-admin\", \"/login\"]):
-            summary[\"notes\"].append(f\"possible admin/login page: {p['url']} (status {p.get('status')})\")
-        if \"/.env\" in p[\"url\"]:
-            summary[\"notes\"].append(f\".env file reachable: {p['url']}\")
+            if r.get("status") and 200 <= r["status"] < 400:
+                summary["paths"].append(r)
+            elif r.get("status") in (401, 403, 500):
+                summary["paths"].append(r)
+
+    if probe.get("status") and probe["status"] < 400:
+        if "x-powered-by" in headers or "server" in headers:
+            summary["notes"].append(f"server banner: {headers.get('server') or headers.get('x-powered-by')}")
+
+    for p in summary["paths"]:
+        if any(x in p["url"].lower() for x in ["/admin", "/wp-admin", "/login"]):
+            summary["notes"].append(f"possible admin/login page: {p['url']} (status {p.get('status')})")
+        if "/.env" in p["url"]:
+            summary["notes"].append(f".env file reachable: {p['url']}")
     return summary
 
 
 # --- Runner ---
 async def run_audit(targets: List[str], concurrency: int, plugins_path: str | None, screenshot_dir: str | None, use_subfinder: bool, output_json: str | None):
-    # augment targets via external discovery if requested
     all_targets = []
     for t in targets:
         if use_subfinder:
             all_targets += run_subfinder(t)
             all_targets += run_amass(t)
         all_targets.append(t)
-    # dedupe and normalize
     all_targets = sorted({tt.strip() for tt in all_targets if tt.strip()})
-    print(f\"[+] Total unique targets: {len(all_targets)}\")
-
+    print(f"[+] Total unique targets: {len(all_targets)}")
 
     connector = aiohttp.TCPConnector(limit_per_host=10, ssl=False)
     timeout = aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)
@@ -246,87 +229,74 @@ async def run_audit(targets: List[str], concurrency: int, plugins_path: str | No
     async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         async def worker(t):
             async with sem:
-                print(f\"[>] Auditing {t}\")
+                print(f"[>] Auditing {t}")
                 summary = await audit_target(session, t, COMMON_PATHS)
-                # run plugins
                 for name, mod in plugins:
                     try:
                         plugin_res = await mod.run(session, t, summary)
-                        summary[\"plugins\"][name] = plugin_res
+                        summary["plugins"][name] = plugin_res
                     except Exception as e:
-                        summary[\"plugins\"][name] = {\"error\": str(e)}
+                        summary["plugins"][name] = {"error": str(e)}
                 return summary
         tasks = [worker(t) for t in all_targets]
         for fut in asyncio.as_completed(tasks):
             res = await fut
             results.append(res)
 
-    # Take screenshots if requested (best-effort)
     if screenshot_dir:
         try:
             from playwright.async_api import async_playwright
         except Exception as e:
-            print(f\"[-] Playwright not available: {e}. Skipping screenshots.\")
-            # still continue to write outputs
-            if output_json:
-                with open(output_json, \"w\", encoding=\"utf-8\") as f:
-                    json.dump(results, f, indent=2)
-                print(f\"[+] Wrote JSON: {output_json}\")
+            print(f"[-] Playwright not available: {e}")
             return results
 
         os.makedirs(screenshot_dir, exist_ok=True)
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(headless=True)
             for host in all_targets:
-                # try https then http primarily (so screenshots prefer secure)
-                for scheme in (\"https\", \"http\"):
-                    url = f\"{scheme}://{host}\"
-                    outfile = os.path.join(screenshot_dir, f\"{host}_{scheme}.png\")
+                for scheme in ("https", "http"):
+                    url = f"{scheme}://{host}"
+                    outfile = os.path.join(screenshot_dir, f"{host}_{scheme}.png")
                     try:
                         await take_screenshot(browser, url, outfile)
                     except Exception as e:
-                        print(f\"[-] Screenshot failed for {url}: {e}\")
+                        print(f"[-] Screenshot failed for {url}: {e}")
             await browser.close()
 
     if output_json:
-        with open(output_json, \"w\", encoding=\"utf-8\") as f:
+        with open(output_json, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2)
-        print(f\"[+] Wrote JSON: {output_json}")
+        print(f"[+] Wrote JSON: {output_json}")
 
     return results
 
 
-# --- Reporting helpers ---
+# --- Reporting ---
 def results_to_csv(results: List[Dict[str, Any]], csv_path: str):
     rows = []
     for r in results:
-        host = r.get(\"host\")
-        status = r.get(\"http_probe\", {}).get(\"status\")
-        title = r.get(\"http_probe\", {}).get(\"title\")
-        server = r.get(\"http_probe\", {}).get(\"server\")
-        sec_missing = \",\".join(r.get(\"sec_headers\", {}).get(\"missing\", []))
-        notes = \" | \".join(r.get(\"notes\", []))
+        host = r.get("host")
+        status = r.get("http_probe", {}).get("status")
+        title = r.get("http_probe", {}).get("title")
+        server = r.get("http_probe", {}).get("server")
+        sec_missing = ",".join(r.get("sec_headers", {}).get("missing", []))
+        notes = " | ".join(r.get("notes", []))
         rows.append([host, status, title, server, sec_missing, notes])
-    with open(csv_path, \"w\", newline=\"\", encoding=\"utf-8\") as f:
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow([\"host\", \"status\", \"title\", \"server\", \"missing_security_headers\", \"notes\"])
+        w.writerow(["host", "status", "title", "server", "missing_security_headers", "notes"])
         w.writerows(rows)
-    print(f\"[+] Wrote CSV: {csv_path}\")
+    print(f"[+] Wrote CSV: {csv_path}")
 
 
 def render_html_report(results: List[Dict[str, Any]], html_path: str, screenshots_dir: str | None):
-    \"\"\"
-    Produce a simple single-file HTML report. Screenshots, if present, are expected
-    to be named <host>_https.png and/or <host>_http.png in screenshots_dir.
-    \"\"\"
     js_results = json.dumps(results)
-    screenshots_dir_js = json.dumps(screenshots_dir or \"\")
+    screenshots_dir_js = json.dumps(screenshots_dir or "")
 
-    # Use double braces {{ }} where JS/CSS uses braces so .format() won't try to replace them.
-    html_template = \"\"\"<!doctype html>
+    html_template = """<!doctype html>
 <html>
 <head>
-<meta charset=\"utf-8\"/>
+<meta charset="utf-8"/>
 <title>AuditHawk Report</title>
 <style>
 body{{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:20px}}
@@ -341,12 +311,12 @@ pre{{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}}
 <body>
 <h1>AuditHawk Report</h1>
 <p>Generated: {ctime}</p>
-<div id=\"report\"></div>
+<div id="report"></div>
 <script>
 const results = {results};
 const screenshotsDir = {screenshots};
 
-function safe(s){{ return (s===null||s===undefined)? \"\": s; }}
+function safe(s){{ return (s===null||s===undefined)? "": s; }}
 
 const container = document.getElementById('report');
 results.forEach(r=>{{
@@ -360,8 +330,7 @@ results.forEach(r=>{{
 
   div.innerHTML = header + meta + missing + notes + paths + plugins;
 
-  // add screenshots if available
-  if (screenshotsDir) {{                                                                
+  if (screenshotsDir) {{
     const row = document.createElement('div'); row.className = 'screenshot-row';
     const host = r.host;
     ['https','http'].forEach(scheme=>{{
@@ -379,7 +348,7 @@ results.forEach(r=>{{
 </script>
 </body>
 </html>
-\"\"\".format(
+""".format(
         ctime=time.ctime(),
         results=js_results,
         screenshots=screenshots_dir_js
@@ -387,7 +356,7 @@ results.forEach(r=>{{
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_template)
-    print(f\"[+] Wrote HTML report: {html_path}\")
+    print(f"[+] Wrote HTML report: {html_path}")
 
 
 # --- CLI ---
@@ -426,7 +395,6 @@ def main():
     if args.html:
         render_html_report(results, args.html, args.screenshot_dir if args.screenshot else None)
     else:
-        # print a compact summary
         for r in results:
             print(f"-> {r['host']}  status: {r['http_probe'].get('status')}  missing headers: {len(r['sec_headers']['missing'])}  notes: {len(r['notes'])}")
 
