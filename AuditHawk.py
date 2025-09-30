@@ -200,101 +200,87 @@ async def run_audit(targets:List[str], concurrency:int, plugins_path:str|None, s
         with open(output_json,"w",encoding="utf-8") as f: json.dump(results,f,indent=2)
         print(f"[+] Wrote JSON: {output_json}")
     return results
-# --- Reporting ---
-def results_to_csv(results: List[Dict[str, Any]], csv_path: str):
-    rows = []
-    for r in results:
-        host = r.get("host")
-        status = r.get("http_probe", {}).get("status")
-        title = r.get("http_probe", {}).get("title")
-        server = r.get("http_probe", {}).get("server")
-        sec_missing = ",".join(r.get("sec_headers", {}).get("missing", []))
-        notes = " | ".join(r.get("notes", []))
-        rows.append([host, status, title, server, sec_missing, notes])
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["host", "status", "title", "server", "missing_security_headers", "notes"])
-        w.writerows(rows)
-    print(f"[+] Wrote CSV: {csv_path}")
 
-##Reporting
+# --- Reporting ---
 def render_html_report(results, html_path, screenshots_dir: str | None):
     """
-    Generate a self-contained HTML report.
+    Generate a self-contained HTML report with results and screenshots.
     """
-    js_results = json.dumps(results)
+    # Safe JSON encoding for JavaScript
+    js_results = json.dumps(results, ensure_ascii=False)
     screenshots_dir_js = json.dumps(screenshots_dir or "")
 
-    # Use triple quotes and .format() so ${...} inside JavaScript stays untouched
     html_template = """<!doctype html>
 <html>
 <head>
 <meta charset="utf-8"/>
 <title>AuditHawk Report</title>
 <style>
-body {{ font-family: system-ui, sans-serif; margin: 20px; }}
-.card {{ border: 1px solid #ddd; padding: 12px; margin: 12px 0; border-radius: 8px; }}
-.card h2 {{ margin: 0 0 8px; }}
-pre {{ background: #f7f7f7; padding: 8px; border-radius: 6px; overflow: auto; }}
-img.thumb {{ max-width: 320px; margin: 6px 4px; border: 1px solid #ccc; border-radius: 6px; }}
-.screenshot-row {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }}
+body { font-family: system-ui, sans-serif; margin: 20px; }
+.card { border: 1px solid #ddd; padding: 12px; margin: 12px 0; border-radius: 8px; }
+.card h2 { margin: 0 0 8px; }
+pre { background: #f7f7f7; padding: 8px; border-radius: 6px; overflow: auto; }
+img.thumb { max-width: 320px; margin: 6px 4px; border: 1px solid #ccc; border-radius: 6px; }
+.screenshot-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 </style>
 </head>
 <body>
 <h1>AuditHawk Report</h1>
-<p>Generated: {ctime}</p>
+<p>Generated: __CTIME__</p>
 <div id="report"></div>
 <script>
-const results = {results};
-const screenshotsDir = {screenshots};
+const results = __RESULTS__;
+const screenshotsDir = __SCREENSHOTS__;
 
-function safe(s) {{ return (s===null || s===undefined) ? "" : s; }}
+function safe(s) { return (s===null || s===undefined) ? "" : s; }
 
 const container = document.getElementById('report');
-results.forEach(r => {{
+results.forEach(r => {
   const div = document.createElement('div');
   div.className = 'card';
   div.innerHTML = `
-    <h2>${{r.host}} <small>(${ {{"safe(r.http_probe && r.http_probe.status)"}} })</small></h2>
-    <p><b>Title:</b> ${{safe(r.http_probe && r.http_probe.title)}} 
-       <b>Server:</b> ${{safe(r.http_probe && r.http_probe.server)}}</p>
-    <p><b>Missing headers:</b> ${{safe((r.sec_headers && r.sec_headers.missing || []).join(', '))}}</p>
-    <p><b>Notes:</b> ${{safe((r.notes || []).join(' | '))}}</p>
-    <details><summary>Paths (${{(r.paths || []).length}})</summary>
-      <pre>${{JSON.stringify(r.paths, null, 2)}}</pre>
+    <h2>${r.host} <small>(${safe(r.http_probe && r.http_probe.status)})</small></h2>
+    <p><b>Title:</b> ${safe(r.http_probe && r.http_probe.title)}
+       <b>Server:</b> ${safe(r.http_probe && r.http_probe.server)}</p>
+    <p><b>Missing headers:</b> ${safe((r.sec_headers && r.sec_headers.missing || []).join(', '))}</p>
+    <p><b>Notes:</b> ${safe((r.notes || []).join(' | '))}</p>
+    <details><summary>Paths (${(r.paths || []).length})</summary>
+      <pre>${JSON.stringify(r.paths, null, 2)}</pre>
     </details>
     <details><summary>Plugins</summary>
-      <pre>${{JSON.stringify(r.plugins, null, 2)}}</pre>
+      <pre>${JSON.stringify(r.plugins, null, 2)}</pre>
     </details>
   `;
 
-  if (screenshotsDir) {{
+  if (screenshotsDir) {
     const row = document.createElement('div');
     row.className = 'screenshot-row';
-    ["https","http"].forEach(sch => {{
+    ["https","http"].forEach(sch => {
       const img = document.createElement('img');
       img.src = screenshotsDir + "/" + r.host + "_" + sch + ".png";
       img.className = 'thumb';
       img.alt = r.host + "_" + sch;
       row.appendChild(img);
-    }});
+    });
     div.appendChild(row);
-  }}
+  }
   container.appendChild(div);
-}});
+});
 </script>
 </body>
-</html>
-""".format(
-        ctime=time.ctime(),
-        results=js_results,
-        screenshots=screenshots_dir_js
+</html>"""
+
+    # Replace placeholders
+    html_template = (
+        html_template.replace("__CTIME__", time.ctime())
+                     .replace("__RESULTS__", js_results)
+                     .replace("__SCREENSHOTS__", screenshots_dir_js)
     )
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_template)
-    print(f"[+] Wrote HTML report: {html_path}")
 
+    print(f"[+] Wrote HTML report: {html_path}")
 
 # --- CLI ---
 def load_targets_from_file(path): 
