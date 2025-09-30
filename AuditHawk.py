@@ -280,11 +280,11 @@ def render_html_report(results: List[Dict[str,Any]], html_path: str, screenshots
 <meta charset="utf-8"/>
 <title>AuditHawk Report</title>
 <style>
-body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:20px}
-.card{border-radius:8px; border:1px solid #ddd; padding:12px; margin-bottom:12px}
-h2{margin-top:0}
-pre{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}
-.thumb{max-width:320px;display:block;margin:6px 0;border:1px solid #ccc}
+body{{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:20px}}
+.card{{border-radius:8px; border:1px solid #ddd; padding:12px; margin-bottom:12px}}
+h2{{margin-top:0}}
+pre{{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}}
+.thumb{{max-width:320px;display:block;margin:6px 0;border:1px solid #ccc}}
 </style>
 </head>
 <body>
@@ -295,25 +295,25 @@ pre{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}
 const results = {results};
 const screenshotsDir = {screenshots};
 
-function safe(s){ return (s===null||s===undefined)? "": s; }
+function safe(s){{ return (s===null||s===undefined)? "": s; }}
 
 const container = document.getElementById('report');
-results.forEach(r=>{
+results.forEach(r=>{{
   const div = document.createElement('div'); div.className='card';
-  div.innerHTML = `<h2>${r.host} &nbsp; <small>${safe(r.http_probe && r.http_probe.status)}</small></h2>
-    <p><strong>Title:</strong> ${safe(r.http_probe && r.http_probe.title)} <strong>Server:</strong> ${safe(r.http_probe && r.http_probe.server)}</p>
-    <p><strong>Missing security headers:</strong> ${safe((r.sec_headers && r.sec_headers.missing || []).join(', '))}</p>
-    <p><strong>Notes:</strong> ${safe((r.notes||[]).join(' | '))}</p>
-    <details><summary>Paths (${(r.paths||[]).length})</summary><pre>${JSON.stringify(r.paths, null, 2)}</pre></details>
-    <details><summary>Plugin results</summary><pre>${JSON.stringify(r.plugins, null, 2)}</pre></details>
+  div.innerHTML = `<h2>${{r.host}} &nbsp; <small>${{safe(r.http_probe && r.http_probe.status)}}</small></h2>
+    <p><strong>Title:</strong> ${{safe(r.http_probe && r.http_probe.title)}} <strong>Server:</strong> ${{safe(r.http_probe && r.http_probe.server)}}</p>
+    <p><strong>Missing security headers:</strong> ${{safe((r.sec_headers && r.sec_headers.missing || []).join(', '))}}</p>
+    <p><strong>Notes:</strong> ${{safe((r.notes||[]).join(' | '))}}</p>
+    <details><summary>Paths (${{(r.paths||[]).length}})</summary><pre>${{JSON.stringify(r.paths, null, 2)}}</pre></details>
+    <details><summary>Plugin results</summary><pre>${{JSON.stringify(r.plugins, null, 2)}}</pre></details>
   `;
-  if (screenshotsDir){
+  if (screenshotsDir){{
     const fn = screenshotsDir + '/' + r.host + '.png';
     const img = document.createElement('img');
     img.src = fn; img.className = 'thumb'; div.appendChild(img);
-  }
+  }}
   container.appendChild(div);
-});
+}});
 </script>
 </body>
 </html>
@@ -326,6 +326,7 @@ results.forEach(r=>{
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_template)
     print(f"[+] Wrote HTML report: {html_path}")
+
 
 
 # --- CLI ---
