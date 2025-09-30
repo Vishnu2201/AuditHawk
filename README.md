@@ -1,106 +1,109 @@
-# 🦅 AuditHawk  
-**Async Recon + Plugin Framework + Screenshots + Reporting**  
+# AuditHawk 🦅
 
-AuditHawk is a modern, lightweight reconnaissance and auditing tool for pentesters, bug bounty hunters, and security researchers.  
-It combines fast async scanning, plugin-based extensibility, and beautiful HTML/CSV/JSON reports — all in one.  
+**AuditHawk** is a powerful asynchronous reconnaissance and auditing tool built for bug bounty hunters, penetration testers, and security researchers.  
+It automates recon workflows, integrates plugin-based checks, and generates structured **JSON, CSV, and HTML reports** with screenshots.
 
 ---
 
-## ✨ Features
-- 🚀 **Asynchronous scanning** for high-speed enumeration  
-- 🔌 **Plugin system** — drop in your own Python plugins for custom checks  
-- 🌐 **Subdomain discovery** (integrates with `subfinder` & `amass` if installed)  
-- 🔎 **HTTP probing & security header analysis**  
-- 🗂 **Common path discovery** (`/admin`, `/login`, `/robots.txt`, etc.)  
-- 📸 **Screenshot support** using Playwright  
-- 📊 **Reports in JSON, CSV, and HTML** with screenshots embedded  
+## 🚀 Features
+- **Asynchronous scanning** for speed and scale  
+- **Plugin-based architecture** – add your own custom checks easily  
+- **Screenshot support** using Playwright (with stealth mode)  
+- **Subdomain enumeration** via Subfinder & Amass  
+- **HTML + CSV + JSON reports** with visual evidence  
+- **Security header analysis**  
+- **Common path probing** (`/admin`, `/login`, `/robots.txt`, etc.)  
+- Lightweight, modular, and extensible  
 
 ---
 
 ## 📦 Installation
 
+Clone the repository and run the installer:
+
 ```bash
-git clone https://github.com/Vishnu2201/AuditHawk.git
+git clone https://github.com/<your-username>/AuditHawk.git
 cd AuditHawk
 chmod +x install.sh
-./install.sh --with-playwright   # installs dependencies + Playwright browsers
+./install.sh --with-playwright
 ```
 
-Activate the environment:
+> Use `--with-playwright` to install browsers for screenshot support.
+
+Activate the virtual environment:
 ```bash
 source .venv/bin/activate
 ```
 
 ---
 
-## 🚀 Usage
+## 🛠️ Usage
 
-### Scan a single target
+### Single target:
 ```bash
 python3 AuditHawk.py --target example.com --html report.html --screenshot
 ```
 
-### Scan multiple targets from a file
+### Multiple targets from file:
 ```bash
-python3 AuditHawk.py --targets hosts.txt --csv results.csv --html report.html
+python3 AuditHawk.py --targets hosts.txt --use-subfinder --csv report.csv
 ```
 
-### With subdomain enumeration (if tools available)
-```bash
-python3 AuditHawk.py --target example.com --use-subfinder --output subs.json
-```
+### Options:
+| Flag               | Description |
+|--------------------|-------------|
+| `--target`         | Scan a single domain |
+| `--targets`        | Load multiple domains from file |
+| `--concurrency`    | Number of concurrent requests (default: 40) |
+| `--plugins`        | Path to plugins (default: `plugins/`) |
+| `--screenshot`     | Enable screenshots |
+| `--screenshot-dir` | Directory to save screenshots (default: `screenshots/`) |
+| `--use-subfinder`  | Run subfinder + amass for subdomains |
+| `--output`         | Save results in JSON format |
+| `--csv`            | Save results in CSV format |
+| `--html`           | Save results in HTML report |
+| `--delay`          | Delay between requests |
+| `--stealth`        | Enable stealth mode for Playwright |
 
 ---
 
-## 📂 Output Examples
+## 📂 Plugins
 
-- **HTML Report**: interactive, with plugin results + screenshots  
-- **CSV**: quick summaries for spreadsheets  
-- **JSON**: structured results for scripting  
-
-Example HTML snippet:  
-```html
-<h2>example.com</h2>
-<p>Missing headers: content-security-policy, x-frame-options</p>
-<p>Notes: possible admin/login page: https://example.com/admin (403)</p>
-```
-
----
-
-## 🔌 Plugins
-
-AuditHawk comes with built-in plugins:
-- **admin_probe** → checks for common admin/login endpoints  
-- **cms_fingerprint** → detects CMS files (WordPress, etc.)  
-- **s3_probe** → finds exposed AWS S3 buckets  
-- **waf_fingerprint** → fingerprints WAF vendors  
-
-You can create your own by adding a `.py` file under `plugins/` with:  
+Plugins live in the `plugins/` directory.  
+Each plugin must define:
 
 ```python
 async def run(session, base, results):
-    # Your custom logic
-    return {"custom": "data"}
+    return {"key": "value"}
 ```
 
----
-
-## 🛠 Roadmap
-- [ ] Add nuclei template integration  
-- [ ] Enhance WAF fingerprinting  
-- [ ] Live dashboard mode with WebSocket  
-- [ ] More built-in plugins  
+### Included plugins:
+- `admin_probe.py` – looks for common admin panels  
+- `cms_fingerprint.py` – fingerprints common CMS technologies  
+- `s3_probe.py` – checks for misconfigured S3 buckets  
+- `waf_fingerprint.py` – detects Web Application Firewalls  
 
 ---
 
-## ⚡ Quick Start
+## 📊 Example Output
 
-```bash
-# Scan and generate all reports
-python3 AuditHawk.py --target target.com --screenshot --html report.html --csv results.csv
-```
+Run against `flipkart.com`:
+- JSON: `AuditHawk_results.json`  
+- CSV: `report.csv`  
+- HTML: `report.html` with screenshots  
 
 ---
 
-## 📜 License
-MIT License © 2025 [Your Name]  
+## 📝 License
+MIT License – free to use and modify.
+
+---
+
+## 💡 Contributing
+PRs and new plugins are welcome!  
+
+---
+
+## ⚠️ Disclaimer
+AuditHawk is built for **educational and authorized security testing purposes only**.  
+The author is **not responsible for misuse** of this tool.
