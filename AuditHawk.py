@@ -202,6 +202,7 @@ async def run_audit(targets:List[str], concurrency:int, plugins_path:str|None, s
     return results
 
 # --- Reporting ---
+d# --- Reporting ---
 def render_html_report(results, html_path, screenshots_dir: str | None):
     """
     Generate a self-contained HTML report.
@@ -209,7 +210,7 @@ def render_html_report(results, html_path, screenshots_dir: str | None):
     js_results = json.dumps(results)
     screenshots_dir_js = json.dumps(screenshots_dir or "")
 
-    html_template = """<!doctype html>
+    html_template = f"""<!doctype html>
 <html>
 <head>
 <meta charset="utf-8"/>
@@ -225,11 +226,11 @@ img.thumb {{ max-width: 320px; margin: 6px 4px; border: 1px solid #ccc; border-r
 </head>
 <body>
 <h1>AuditHawk Report</h1>
-<p>Generated: {ctime}</p>
+<p>Generated: {time.ctime()}</p>
 <div id="report"></div>
 <script>
-const results = {results};
-const screenshotsDir = {screenshots};
+const results = {js_results};
+const screenshotsDir = {screenshots_dir_js};
 
 function safe(s) {{ return (s===null || s===undefined) ? "" : s; }}
 
@@ -238,7 +239,7 @@ results.forEach(r => {{
   const div = document.createElement('div');
   div.className = 'card';
   div.innerHTML = `
-    <h2>${{r.host}} <small>(${ {{} }safe(r.http_probe?.status)})</small></h2>
+    <h2>${{r.host}} <small>(${safe(r.http_probe?.status)})</small></h2>
     <p><b>Title:</b> ${{safe(r.http_probe?.title)}} <b>Server:</b> ${{safe(r.http_probe?.server)}}</p>
     <p><b>Missing headers:</b> ${{safe((r.sec_headers?.missing || []).join(', '))}}</p>
     <p><b>Notes:</b> ${{safe((r.notes || []).join(' | '))}}</p>
@@ -262,22 +263,38 @@ results.forEach(r => {{
 }});
 </script>
 </body>
-</html>
-""".format(
-        ctime=time.ctime(),
-        results=js_results,
-        screenshots=screenshots_dir_js
-    )
+</html>"""
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_template)
     print(f"[+] Wrote HTML report: {html_path}")
 
-
-
 # --- CLI ---
 def load_targets_from_file(path): 
     return [l.strip() for l in open(path) if l.strip() and not l.startswith("#")]
+
+# --- Reporting ---
+def results_to_csv(results: List[Dict[str, Any]], csv_path: str):
+    rows = []
+    for r in results:
+        host = r.get("host")
+        status = r.get("http_probe", {}).get("status")
+        title = r.get("http_probe", {}).get("title")
+        server = r.get("http_probe", {}).get("server")
+        sec_missing = ",".join(r.get("sec_headers", {}).get("missing", []))
+        notes = " | ".join(r.get("notes", []))
+        rows.append([host, status, title, server, sec_missing, notes])
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["host", "status", "title", "server", "missing_security_headers", "notes"])
+        w.writerows(rows)
+    print(f"[+] Wrote CSV: {csv_path}")
+
+
+def render_html_report(results, html_path, screenshots_dir: str | None):
+    ...
+    # (your f-string HTML template, unchanged except no stray `d`)
+
 
 def main():
     p=argparse.ArgumentParser(description="AuditHawk async recon tool")
