@@ -21,7 +21,7 @@ It discovers subdomains, probes HTTP(S), checks headers, finds common paths, run
 
 Clone the repo:
 ```bash
-git clone https://github.com/yourusername/pentool.git
+git clone https://github.com/Vishnu2201/AuditHawk.git
 cd pentool
 ```
 
