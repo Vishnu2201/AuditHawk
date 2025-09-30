@@ -316,8 +316,16 @@ def main():
     targets=load_targets_from_file(a.targets) if a.targets else [a.target]
     res=asyncio.run(run_audit(targets,a.concurrency,a.plugins,a.screenshot_dir if a.screenshot else None,
         a.use_subfinder,a.output,a.delay,a.stealth))
-    if a.csv: results_to_csv(res,a.csv)
-    if a.html: render_html_report(res,a.html,a.screenshot_dir if a.screenshot else None)
-    else: [print(f"-> {r['host']} {r['http_probe'].get('status')} headers missing:{len(r['sec_headers']['missing'])}") for r in res]
+    if a.csv:
+        results_to_csv(res, a.csv)
+
+    if a.html:
+        render_html_report(res, a.html, a.screenshot_dir if a.screenshot else None)
+
+    if not a.html and not a.csv:
+        for r in res:
+            print(f"-> {r['host']} {r['http_probe'].get('status')} "
+                f"headers missing:{len(r['sec_headers']['missing'])}")
+
 
 if __name__=="__main__": main()
