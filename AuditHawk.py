@@ -27,6 +27,15 @@ from urllib.parse import urlparse
 
 import aiohttp
 import re
+import random
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile Safari/604.1",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; rv:126.0) Gecko/20100101 Firefox/126.0"
+]
 
 # --- Config ---
 COMMON_PATHS = [
@@ -70,8 +79,15 @@ def analyze_security_headers(headers: Dict[str, str]) -> Dict[str, Any]:
 # --- HTTP helper functions ---
 async def fetch(session: aiohttp.ClientSession, url: str, timeout=DEFAULT_TIMEOUT) -> Dict[str, Any]:
     result = {"url": url, "status": None, "title": None, "server": None, "headers": {}, "len": 0, "error": None}
+    headers = {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive"
+    }
     try:
-        async with session.get(url, timeout=timeout, allow_redirects=True) as resp:
+        async with session.get(url, headers=headers, timeout=timeout, allow_redirects=True) as resp:
             result["status"] = resp.status
             result["headers"] = {k.lower(): v for k, v in resp.headers.items()}
             result["server"] = resp.headers.get("Server") or resp.headers.get("server")
@@ -83,6 +99,7 @@ async def fetch(session: aiohttp.ClientSession, url: str, timeout=DEFAULT_TIMEOU
     except Exception as e:
         result["error"] = str(e)
     return result
+
 
 
 async def fetch_head_or_get(session: aiohttp.ClientSession, url: str) -> Dict[str, Any]:
@@ -153,22 +170,26 @@ async def take_screenshot(browser, url: str, path: str):
     try:
         page = await browser.new_page()
         try:
-            await page.set_viewport_size({"width": 1280, "height": 900})
+            await page.set_viewport_size({"width": 1366, "height": 768})
+            await page.set_extra_http_headers({
+                "User-Agent": random.choice(USER_AGENTS),
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.google.com/"
+            })
             await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+            await asyncio.sleep(random.uniform(2, 5))  # delay to look human
             await page.screenshot(path=path, full_page=True)
             print(f"[+] Screenshot captured for {url} -> {path}")
+            return True
         except Exception as e:
-            print(f"[!] Primary screenshot failed for {url}: {e}")
-            try:
-                await page.goto(url, timeout=10000, wait_until="commit")
-                await page.screenshot(path=path, full_page=True)
-                print(f"[+] Fallback screenshot for {url} -> {path}")
-            except Exception as e2:
-                print(f"[-] Screenshot failed for {url}: {e2}")
+            print(f"[!] Screenshot attempt failed for {url}: {e}")
+            return False
         finally:
             await page.close()
     except Exception as outer:
         print(f"[-] Could not create page for {url}: {outer}")
+        return False
+
 
 
 # --- High level audit ---
