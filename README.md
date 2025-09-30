@@ -103,4 +103,4 @@ python3 AuditHawk.py --target target.com --screenshot --html report.html --csv r
 ---
 
 ## 📜 License
-MIT License © 2025 [Your Name]  
+MIT License © 2025 Vishnu R 
