@@ -142,30 +142,28 @@ def run_amass(target: str) -> List[str]:
         return []
 
 # --- Screenshot using Playwright (optional) ---
-async def take_screenshots(targets: List[str], outdir: str):
+async def take_screenshot(browser, url: str, path: str):
     try:
-        from playwright.async_api import async_playwright
-    except Exception as e:
-        print("[-] Playwright not installed or failed to import. Skipping screenshots.")
-        return []
-    os.makedirs(outdir, exist_ok=True)
-    screenshots = []
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        for t in targets:
-            url = normalize_target(t)
+        page = await browser.new_page()
+        try:
+            # First attempt: wait until DOM is loaded, with 30s timeout
+            await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+            await page.screenshot(path=path, full_page=True)
+            print(f"[+] Screenshot captured for {url}")
+        except Exception as e:
+            print(f"[!] Primary screenshot attempt failed for {url}: {e}")
+            # Fallback: try again quickly without waiting for full load
             try:
-                page = await browser.new_page()
-                await page.goto(url, timeout=15000)
-                filename = os.path.join(outdir, f"{get_host_from_url(url)}.png")
-                await page.screenshot(path=filename, full_page=True)
-                screenshots.append(filename)
-                print(f"[+] Screenshot saved: {filename}")
-                await page.close()
-            except Exception as e:
-                print(f"[-] Screenshot failed for {t}: {e}")
-        await browser.close()
-    return screenshots
+                await page.goto(url, timeout=10000, wait_until="commit")
+                await page.screenshot(path=path, full_page=True)
+                print(f"[+] Fallback screenshot captured for {url}")
+            except Exception as e2:
+                print(f"[-] Screenshot failed completely for {url}: {e2}")
+        finally:
+            await page.close()
+    except Exception as outer:
+        print(f"[-] Could not create page for {url}: {outer}")
+
 
 # --- High level audit for a single target ---
 async def audit_target(session: aiohttp.ClientSession, base: str, paths: List[str]) -> Dict[str,Any]:
