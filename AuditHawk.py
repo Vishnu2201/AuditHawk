@@ -270,58 +270,63 @@ def results_to_csv(results: List[Dict[str,Any]], csv_path: str):
     print(f"[+] Wrote CSV: {csv_path}")
 
 def render_html_report(results: List[Dict[str,Any]], html_path: str, screenshots_dir: str|None):
-    # simple single-file HTML. Embeds screenshot filenames (not base64) and JSON data for interactive view.
-    html_template = f"""<!doctype html>
+    # Build a simple HTML report. Avoid f-strings so JS braces don't break Python parsing.
+    js_results = json.dumps(results)
+    screenshots_dir_js = json.dumps(screenshots_dir or "")
+
+    html_template = """<!doctype html>
 <html>
 <head>
 <meta charset="utf-8"/>
 <title>AuditHawk Report</title>
 <style>
-body{{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:20px}}
-.card{{border-radius:8px; border:1px solid #ddd; padding:12px; margin-bottom:12px}}
-h2{{margin-top:0}}
-pre{{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}}
-.thumb{{max-width:320px;display:block;margin:6px 0;border:1px solid #ccc}}
+body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:20px}
+.card{border-radius:8px; border:1px solid #ddd; padding:12px; margin-bottom:12px}
+h2{margin-top:0}
+pre{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}
+.thumb{max-width:320px;display:block;margin:6px 0;border:1px solid #ccc}
 </style>
 </head>
 <body>
 <h1>AuditHawk Report</h1>
-<p>Generated: {time.ctime()}</p>
+<p>Generated: {ctime}</p>
 <div id="report"></div>
 <script>
-const results = {json.dumps(results)};
-const screenshotsDir = {json.dumps(screenshots_dir or "")};
+const results = {results};
+const screenshotsDir = {screenshots};
 
 function safe(s){ return (s===null||s===undefined)? "": s; }
 
 const container = document.getElementById('report');
 results.forEach(r=>{
   const div = document.createElement('div'); div.className='card';
-  div.innerHTML = `<h2>${r.host} &nbsp; <small>${safe(r.http_probe?.status)}</small></h2>
-    <p><strong>Title:</strong> ${safe(r.http_probe?.title)} <strong>Server:</strong> ${safe(r.http_probe?.server)}</p>
-    <p><strong>Missing security headers:</strong> ${safe((r.sec_headers?.missing||[]).join(', '))}</p>
+  div.innerHTML = `<h2>${r.host} &nbsp; <small>${safe(r.http_probe && r.http_probe.status)}</small></h2>
+    <p><strong>Title:</strong> ${safe(r.http_probe && r.http_probe.title)} <strong>Server:</strong> ${safe(r.http_probe && r.http_probe.server)}</p>
+    <p><strong>Missing security headers:</strong> ${safe((r.sec_headers && r.sec_headers.missing || []).join(', '))}</p>
     <p><strong>Notes:</strong> ${safe((r.notes||[]).join(' | '))}</p>
     <details><summary>Paths (${(r.paths||[]).length})</summary><pre>${JSON.stringify(r.paths, null, 2)}</pre></details>
     <details><summary>Plugin results</summary><pre>${JSON.stringify(r.plugins, null, 2)}</pre></details>
   `;
-  // try add screenshot img
   if (screenshotsDir){
-    const host = r.host;
-    const fn = screenshotsDir + '/' + host + '.png';
+    const fn = screenshotsDir + '/' + r.host + '.png';
     const img = document.createElement('img');
-    img.src = fn;
-    img.className = 'thumb';
-    div.appendChild(img);
+    img.src = fn; img.className = 'thumb'; div.appendChild(img);
   }
   container.appendChild(div);
 });
 </script>
 </body>
 </html>
-"""
+""".format(
+        ctime=time.ctime(),
+        results=js_results,
+        screenshots=screenshots_dir_js
+    )
+
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_template)
     print(f"[+] Wrote HTML report: {html_path}")
+
 
 # --- CLI ---
 def load_targets_from_file(path: str) -> List[str]:
