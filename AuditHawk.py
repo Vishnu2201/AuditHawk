@@ -225,7 +225,8 @@ def render_html_report(results, html_path, screenshots_dir: str | None):
     js_results = json.dumps(results)
     screenshots_dir_js = json.dumps(screenshots_dir or "")
 
-    html_template = f"""<!doctype html>
+    # Use triple quotes and .format() so ${...} inside JavaScript stays untouched
+    html_template = """<!doctype html>
 <html>
 <head>
 <meta charset="utf-8"/>
@@ -241,11 +242,11 @@ img.thumb {{ max-width: 320px; margin: 6px 4px; border: 1px solid #ccc; border-r
 </head>
 <body>
 <h1>AuditHawk Report</h1>
-<p>Generated: {time.ctime()}</p>
+<p>Generated: {ctime}</p>
 <div id="report"></div>
 <script>
-const results = {js_results};
-const screenshotsDir = {screenshots_dir_js};
+const results = {results};
+const screenshotsDir = {screenshots};
 
 function safe(s) {{ return (s===null || s===undefined) ? "" : s; }}
 
@@ -254,8 +255,8 @@ results.forEach(r => {{
   const div = document.createElement('div');
   div.className = 'card';
   div.innerHTML = `
-    <h2>${{r.host}} <small>(${safe(r.http_probe && r.http_probe.status)})</small></h2>
-    <p><b>Title:</b> ${{safe(r.http_probe && r.http_probe.title)}}
+    <h2>${{r.host}} <small>(${ {{"safe(r.http_probe && r.http_probe.status)"}} })</small></h2>
+    <p><b>Title:</b> ${{safe(r.http_probe && r.http_probe.title)}} 
        <b>Server:</b> ${{safe(r.http_probe && r.http_probe.server)}}</p>
     <p><b>Missing headers:</b> ${{safe((r.sec_headers && r.sec_headers.missing || []).join(', '))}}</p>
     <p><b>Notes:</b> ${{safe((r.notes || []).join(' | '))}}</p>
@@ -283,11 +284,17 @@ results.forEach(r => {{
 }});
 </script>
 </body>
-</html>"""
+</html>
+""".format(
+        ctime=time.ctime(),
+        results=js_results,
+        screenshots=screenshots_dir_js
+    )
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_template)
     print(f"[+] Wrote HTML report: {html_path}")
+
 
 # --- CLI ---
 def load_targets_from_file(path): 
