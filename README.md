@@ -1,120 +1,102 @@
-# 🦅 AuditHawk  
-Async Recon & Quick-Audit Framework for Pentesters  
+# Pentool 🔍
+Async Recon + Pluginable Pentesting Helper
 
-AuditHawk is a **fast, safe, and extensible reconnaissance framework** for penetration testers and bug bounty hunters.  
-It performs non-destructive checks like HTTP probing, header analysis, common path discovery, and plugin-based fingerprinting — with optional screenshots and HTML reports for quick triage.  
-
----
-
-## ✨ Features
-- 🌐 **Subdomain discovery** (via [subfinder](https://github.com/projectdiscovery/subfinder) / [amass](https://github.com/owasp-amass/amass) if installed)  
-- ⚡ **Async HTTP probing** — concurrent, efficient scanning  
-- 📋 **Security header audit** — detect missing CSP, HSTS, etc.  
-- 🔍 **Common file/path checks** (`/.env`, `/admin`, `/login`, etc.)  
-- 🧩 **Plugin system** — extend with your own checks (`plugins/*.py`)  
-- 🖼 **Screenshots** via Playwright (optional)  
-- 📊 **Reports** in JSON, CSV, and HTML  
+Pentool is a **safe, non-destructive recon tool** for penetration testers.
+It discovers subdomains, probes HTTP(S), checks headers, finds common paths, runs plugins, and can generate screenshots & HTML reports.
 
 ---
 
-## 📦 Installation
+## Features
+- 🌐 Subdomain discovery (via `subfinder` / `amass` if installed)
+- ⚡ Async HTTP probing (fast, concurrent)
+- 🧩 Plugin system (drop in `plugins/*.py`)
+- 📋 Security header audit
+- 🔍 Common file/path checks (`/.env`, `/admin`, `/login`, etc.)
+- 🖼 Screenshots via Playwright (optional)
+- 📊 JSON, CSV, and HTML reporting
+
+---
+
+## Installation
 
 Clone the repo:
-
-git clone https://github.com/yourusername/AuditHawk.git
-cd AuditHawk
+```bash
+git clone https://github.com/yourusername/pentool.git
+cd pentool
+```
 
 Run installer:
-
+```bash
 ./install.sh
+```
 
-
-With Playwright browsers (for screenshots):
-
+If you want screenshots:
+```bash
 ./install.sh --with-playwright
-
+```
 
 Activate environment:
-
+```bash
 source .venv/bin/activate
+```
 
-🚀 Usage
+---
+
+## Usage
 
 Single target:
-
+```bash
 python3 pentool.py --target example.com --output results.json --csv summary.csv --plugins plugins
-
+```
 
 Multiple targets:
-
+```bash
 python3 pentool.py --targets examples/hosts.txt --use-subfinder --screenshot --plugins plugins --output results.json --csv summary.csv --html report.html
-
+```
 
 Help:
-
+```bash
 python3 pentool.py --help
+```
 
-🔌 Plugins
+---
 
-Three example plugins are included in plugins/
-:
+## Plugins
 
-cms_fingerprint.py → detects WordPress/Drupal
+Three example plugins are included in `plugins/`:
+- `cms_fingerprint.py` → detects WordPress/Drupal
+- `s3_probe.py` → checks for open or restricted S3 buckets
+- `admin_probe.py` → finds common admin portals
 
-s3_probe.py → checks for open or restricted S3 buckets
-
-admin_probe.py → finds common admin portals
-
-👉 Create your own plugin by adding a file to plugins/ with:
-
+You can create your own by adding files to `plugins/` with:
+```python
 async def run(session, base, results):
     # return dict of findings
+```
 
-📊 Output
+---
 
-results.json → full structured data
+## Output
+- `results.json` → full structured data
+- `summary.csv` → compact summary for spreadsheets
+- `report.html` → interactive HTML report with screenshots
 
-summary.csv → compact summary for spreadsheets
+---
 
-report.html → interactive HTML report with screenshots
+## Example
+```bash
+python3 pentool.py --target example.com --screenshot --html report.html
+```
 
-Example report entry:
+Produces:
 
-host: example.com
-status: 200
-title: Example Domain
-server: nginx
-missing headers: content-security-policy, referrer-policy
-notes: server banner: nginx | possible admin/login page: https://example.com/admin
+- JSON with detailed results
+- CSV with summary
+- HTML report with screenshots embedded
 
-📂 Project Structure
-AuditHawk/
-├── pentool.py          # main tool
-├── install.sh          # installer
-├── requirements.txt    # Python dependencies
-├── README.md           # this file
-├── .gitignore
-├── plugins/
-│   ├── cms_fingerprint.py
-│   ├── s3_probe.py
-│   ├── admin_probe.py
-│   └── __init__.py
-├── examples/
-│   └── hosts.txt
-└── screenshots/        # created automatically if --screenshot used
+---
 
-🛠 Roadmap
-
- More built-in plugins (CMS, WAF, API key exposure)
-
- Slack/Telegram alert integrations
-
- CI workflow for scheduled scans
-
- Optional Docker support
-
-🤝 Contributing
-
-Contributions are welcome!
-Open an issue
- or submit a pull request with improvements.
+## Legal Disclaimer
+This tool is for **educational and authorized security testing only**.
+Do not use against systems without explicit written permission.
+The author is not responsible for misuse.
