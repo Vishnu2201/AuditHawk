@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-\"\"\"AuditHawk.py - Async Recon + Pluginable Audit + Screenshots + HTML report
+"""
+AuditHawk.py - Async Recon + Pluginable Audit + Screenshots + HTML report
 
 Usage examples:
   python3 AuditHawk.py --target example.com --output out.json --csv out.csv --screenshot --plugins plugins --concurrency 40
@@ -8,8 +9,9 @@ Usage examples:
 Notes:
  - This tool performs non-invasive checks (HEAD/GET, header analysis, path checks).
  - Plugins must implement: async def run(session, base, results): return plugin_result (dict/None)
- - To enable screenshots, install playwright and run `python -m playwright install` inside the project's venv.
-\"\"\"
+ - To enable screenshots, install playwright and run `playwright install`.
+"""
+
 
 import argparse
 import asyncio
