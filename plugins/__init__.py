@@ -1,1 +1,1 @@
-# plugins package
+# package marker for plugins
