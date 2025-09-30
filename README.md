@@ -1,4 +1,4 @@
-# Pentool 🔍
+# AuditHawk 🔍
 Async Recon + Pluginable Pentesting Helper
 
 Pentool is a **safe, non-destructive recon tool** for penetration testers.
