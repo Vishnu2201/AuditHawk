@@ -327,8 +327,6 @@ results.forEach(r=>{{
         f.write(html_template)
     print(f"[+] Wrote HTML report: {html_path}")
 
-
-
 # --- CLI ---
 def load_targets_from_file(path: str) -> List[str]:
     with open(path, "r", encoding="utf-8") as f:
