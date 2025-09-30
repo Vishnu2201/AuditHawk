@@ -20,7 +20,7 @@ It combines fast async scanning, plugin-based extensibility, and beautiful HTML/
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/Vishnu2201/AuditHawk.git
+git clone https://github.com/YOURUSERNAME/AuditHawk.git
 cd AuditHawk
 chmod +x install.sh
 ./install.sh --with-playwright   # installs dependencies + Playwright browsers
@@ -103,4 +103,4 @@ python3 AuditHawk.py --target target.com --screenshot --html report.html --csv r
 ---
 
 ## 📜 License
-MIT License © 2025 Vishnu R 
+MIT License © 2025 [Your Name]  

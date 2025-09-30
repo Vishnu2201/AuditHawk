@@ -1,3 +1,4 @@
+# Simple CMS fingerprint plugin
 import re
 async def run(session, base, results):
     probe = results.get("http_probe", {}) or {}
